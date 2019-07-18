@@ -26,7 +26,7 @@
   },
   "dependencies": {
     "debug": "^4.1.1",
-    "pg-format": "^1.0.4",
+    "pg-format": "git+https://github.com/gcharnock/node-pg-format.git",
     "typed-emitter": "^0.1.0"
   },
   "devDependencies": {
