@@ -1,37 +1,28 @@
-import test from "ava"
-import DebugLogger from "debug"
-import createPostgresSubscriber, { PgParsedNotification } from "../src/index"
+const createPostgresSubscriber = require("../src/index")
 
 // Need to require `pg` like this to avoid ugly error message
-import pg = require("pg")
+const pg = require("pg")
 
-const debug = DebugLogger("pg-listen:test")
-const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
+const debug = require('debug')("pg-listen:test")
+const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms))
 
-test("can connect", async t => {
+it("can connect", async t => {
   const hub = createPostgresSubscriber({ connectionString: "postgres://postgres:postgres@localhost:5432/postgres" })
   await hub.connect()
   await hub.close()
   t.pass()
 })
 
-test("can listen and notify", async t => {
-  type ChannelEvents = {
-    test: {
-      hello: string
-    },
-    test2: string
-  }
-
+it("can listen and notify", async t => {
   let connectedEvents = 0
-  const notifications: PgParsedNotification[] = []
-  const receivedPayloads: any[] = []
+  const notifications = []
+  const receivedPayloads = []
 
-  const hub = createPostgresSubscriber<ChannelEvents>({ connectionString: "postgres://postgres:postgres@localhost:5432/postgres" })
+  const hub = createPostgresSubscriber({ connectionString: "postgres://postgres:postgres@localhost:5432/postgres" })
 
   hub.events.on("connected", () => connectedEvents++)
-  hub.events.on("notification", (notification: PgParsedNotification) => notifications.push(notification))
-  hub.notifications.on("test", (payload: any) => receivedPayloads.push(payload))
+  hub.events.on("notification", (notification) => notifications.push(notification))
+  hub.notifications.on("test", (payload) => receivedPayloads.push(payload))
 
   await hub.connect()
 
@@ -59,9 +50,9 @@ test("can listen and notify", async t => {
   }
 })
 
-test("can handle notification without payload", async t => {
-  const notifications: PgParsedNotification[] = []
-  const receivedPayloads: any[] = []
+it("can handle notification without payload", async t => {
+  const notifications = []
+  const receivedPayloads = []
 
   const hub = createPostgresSubscriber({ connectionString: "postgres://postgres:postgres@localhost:5432/postgres" })
   await hub.connect()
@@ -69,8 +60,8 @@ test("can handle notification without payload", async t => {
   try {
     await hub.listenTo("test")
 
-    hub.events.on("notification", (notification: PgParsedNotification) => notifications.push(notification))
-    hub.notifications.on("test", (payload: any) => receivedPayloads.push(payload))
+    hub.events.on("notification", (notification) => notifications.push(notification))
+    hub.notifications.on("test", (payload) => receivedPayloads.push(payload))
 
     await hub.notify("test")
     await delay(200)
@@ -89,23 +80,23 @@ test("can handle notification without payload", async t => {
   }
 })
 
-test("can use custom `parse` function", async t => {
-  const notifications: PgParsedNotification[] = []
+it("can use custom `parse` function", async t => {
+  const notifications = []
 
   const connectionString = "postgres://postgres:postgres@localhost:5432/postgres"
 
   const hub = createPostgresSubscriber(
     { connectionString },
-    { parse: (base64: string) => Buffer.from(base64, "base64").toString("utf8") }
+    { parse: (base64) => Buffer.from(base64, "base64").toString("utf8") }
   )
   await hub.connect()
 
-  let client = new pg.Client({ connectionString })
+  const client = new pg.Client({ connectionString })
   await client.connect()
 
   try {
     await hub.listenTo("test")
-    await hub.events.on("notification", (notification: PgParsedNotification) => notifications.push(notification))
+    await hub.events.on("notification", (notification) => notifications.push(notification))
 
     await client.query(`NOTIFY test, '${Buffer.from("I am a payload.", "utf8").toString("base64")}'`)
     await delay(200)
@@ -122,12 +113,12 @@ test("can use custom `parse` function", async t => {
   }
 })
 
-test.serial("getting notified after connection is terminated", async t => {
+it("getting notified after connection is terminated", async t => {
   let connectedEvents = 0
   let reconnects = 0
 
-  const notifications: PgParsedNotification[] = []
-  const receivedPayloads: any[] = []
+  const notifications = []
+  const receivedPayloads = []
 
   const connectionString = "postgres://postgres:postgres@localhost:5432/postgres"
   let client = new pg.Client({ connectionString })
@@ -139,9 +130,9 @@ test.serial("getting notified after connection is terminated", async t => {
   )
 
   hub.events.on("connected", () => connectedEvents++)
-  hub.events.on("notification", (notification: PgParsedNotification) => notifications.push(notification))
+  hub.events.on("notification", (notification) => notifications.push(notification))
   hub.events.on("reconnect", () => reconnects++)
-  hub.notifications.on("test", (payload: any) => receivedPayloads.push(payload))
+  hub.notifications.on("test", (payload) => receivedPayloads.push(payload))
 
   await hub.connect()
 

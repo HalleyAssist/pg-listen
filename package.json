@@ -8,7 +8,7 @@
   "main": "./src/index.js",
   "typings": "./src/index.d.ts",
   "scripts": {
-    "test": "ava",
+    "test": "mocha",
     "test:database": "docker run -e POSTGRES_DB=postgres -e POSTGRES_PASSWORD=postgres -p 5432:5432 --rm postgres:10.4-alpine"
   },
   "keywords": [
@@ -23,6 +23,7 @@
   },
   "dependencies": {
     "debug": "^4.1.1",
+    "mocha": "^7.2.0",
     "pg-format": "git+https://github.com/gcharnock/node-pg-format.git",
     "typed-emitter": "^0.1.0"
   },
@@ -36,18 +37,6 @@
     "pg": "^8.0.3",
     "prettier": "^1.16.4",
     "ts-node": "^8.0.3"
-  },
-  "ava": {
-    "compileEnhancements": false,
-    "extensions": [
-      "js"
-    ],
-    "serial": true,
-    "babel": false
-  },
-  "prettier": {
-    "semi": false,
-    "printWidth": 100
   },
   "lint-staged": {
     "*": [

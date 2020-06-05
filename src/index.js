@@ -94,9 +94,9 @@ function scheduleParanoidChecking(dbClient, intervalTime, reconnect) {
 }
 function createPostgresSubscriber(connectionConfig, options = {}) {
     const { paranoidChecking = 30000, parse = JSON.parse, serialize = JSON.stringify } = options;
-    const emitter = new events.default();
+    const emitter = new events();
     emitter.setMaxListeners(0); // unlimited listeners
-    const notificationsEmitter = new events.default();
+    const notificationsEmitter = new events();
     notificationsEmitter.setMaxListeners(0); // unlimited listeners
     emitter.on("notification", (notification) => {
         notificationsEmitter.emit(notification.channel, notification.payload);
