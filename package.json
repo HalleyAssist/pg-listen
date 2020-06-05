@@ -5,11 +5,10 @@
   "description": "PostgreSQL LISTEN &  NOTIFY that finally works.",
   "author": "Andy Wermke (https://github.com/andywer)",
   "repository": "github:andywer/pg-listen",
-  "main": "./index.js",
-  "typings": "./dist/index.d.ts",
+  "main": "./src/index.js",
+  "typings": "./src/index.d.ts",
   "scripts": {
-    "build": "tsc",
-    "test": "ava test/*.test.ts",
+    "test": "ava test/*.test.js",
     "test:database": "docker run -e POSTGRES_DB=postgres -e POSTGRES_PASSWORD=postgres -p 5432:5432 --rm postgres:10.4-alpine",
     "posttest": "tslint --project .",
     "prepare": "tsc"
@@ -39,17 +38,11 @@
     "pg": "^8.0.3",
     "prettier": "^1.16.4",
     "ts-node": "^8.0.3",
-    "tslint": "^5.14.0",
-    "tslint-config-prettier": "^1.18.0",
-    "typescript": "^3.3.3333"
   },
   "ava": {
     "compileEnhancements": false,
     "extensions": [
-      "ts"
-    ],
-    "require": [
-      "ts-node/register"
+      "js"
     ],
     "serial": true
   },

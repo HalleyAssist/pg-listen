@@ -1,18 +1,17 @@
 "use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-const debug_1 = __importDefault(require("debug"));
-const events_1 = __importDefault(require("events"));
-const pg_format_1 = __importDefault(require("pg-format"));
+
+const debug = require("debug")
+const events = require("events")
+const pg_format = require("pg-format")
 // Need to require `pg` like this to avoid ugly error message (see #15)
 const pg = require("pg");
-const connectionLogger = debug_1.default("pg-listen:connection");
-const notificationLogger = debug_1.default("pg-listen:notification");
-const paranoidLogger = debug_1.default("pg-listen:paranoid");
-const subscriptionLogger = debug_1.default("pg-listen:subscription");
+const connectionLogger = debug("pg-listen:connection");
+const notificationLogger = debug("pg-listen:notification");
+const paranoidLogger = debug("pg-listen:paranoid");
+const subscriptionLogger = debug("pg-listen:subscription");
 const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+
 function connect(connectionConfig, emitter, options) {
     connectionLogger("Creating PostgreSQL client for notification streaming");
     const { retryInterval = 500, retryLimit = Infinity, retryTimeout = 3000 } = options;
@@ -95,9 +94,9 @@ function scheduleParanoidChecking(dbClient, intervalTime, reconnect) {
 }
 function createPostgresSubscriber(connectionConfig, options = {}) {
     const { paranoidChecking = 30000, parse = JSON.parse, serialize = JSON.stringify } = options;
-    const emitter = new events_1.default();
+    const emitter = new events.default();
     emitter.setMaxListeners(0); // unlimited listeners
-    const notificationsEmitter = new events_1.default();
+    const notificationsEmitter = new events.default();
     notificationsEmitter.setMaxListeners(0); // unlimited listeners
     emitter.on("notification", (notification) => {
         notificationsEmitter.emit(notification.channel, notification.payload);
@@ -143,7 +142,7 @@ function createPostgresSubscriber(connectionConfig, options = {}) {
             dbClient = await reconnect(attempt => emitter.emit("reconnect", attempt));
             initialize(dbClient);
             subscriptionLogger(`Re-subscribing to channels: ${subscribedChannels.join(", ")}`);
-            await Promise.all(subscribedChannels.map(channelName => dbClient.query(`LISTEN ${pg_format_1.default.ident(channelName)}`)));
+            await Promise.all(subscribedChannels.map(channelName => dbClient.query(`LISTEN ${pg_format.default.ident(channelName)}`)));
             emitter.emit("connected");
         }
         catch (error) {
@@ -182,16 +181,16 @@ function createPostgresSubscriber(connectionConfig, options = {}) {
             }
             subscriptionLogger(`Subscribing to PostgreSQL notification "${channelName}"`);
             subscribedChannels = [...subscribedChannels, channelName];
-            return dbClient.query(`LISTEN ${pg_format_1.default.ident(channelName)}`);
+            return dbClient.query(`LISTEN ${pg_format.default.ident(channelName)}`);
         },
         notify(channelName, payload) {
             notificationLogger(`Sending PostgreSQL notification to "${channelName}":`, payload);
             if (payload !== undefined) {
                 const serialized = serialize(payload);
-                return dbClient.query(`NOTIFY ${pg_format_1.default.ident(channelName)}, ${pg_format_1.default.literal(serialized)}`);
+                return dbClient.query(`NOTIFY ${pg_format.default.ident(channelName)}, ${pg_format.default.literal(serialized)}`);
             }
             else {
-                return dbClient.query(`NOTIFY ${pg_format_1.default.ident(channelName)}`);
+                return dbClient.query(`NOTIFY ${pg_format.default.ident(channelName)}`);
             }
         },
         unlisten(channelName) {
@@ -200,7 +199,7 @@ function createPostgresSubscriber(connectionConfig, options = {}) {
             }
             subscriptionLogger(`Unsubscribing from PostgreSQL notification "${channelName}"`);
             subscribedChannels = subscribedChannels.filter(someChannel => someChannel !== channelName);
-            return dbClient.query(`UNLISTEN ${pg_format_1.default.ident(channelName)}`);
+            return dbClient.query(`UNLISTEN ${pg_format.default.ident(channelName)}`);
         },
         unlistenAll() {
             subscriptionLogger("Unsubscribing from all PostgreSQL notifications.");
@@ -209,4 +208,4 @@ function createPostgresSubscriber(connectionConfig, options = {}) {
         }
     };
 }
-exports.default = createPostgresSubscriber;
+module.exports = createPostgresSubscriber;
