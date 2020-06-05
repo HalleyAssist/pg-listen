@@ -1,5 +1,5 @@
 const createPostgresSubscriber = require("../src/index")
-
+const {expect} = require('chai')
 // Need to require `pg` like this to avoid ugly error message
 const pg = require("pg")
 
@@ -10,7 +10,6 @@ it("can connect", async t => {
   const hub = createPostgresSubscriber({ connectionString: "postgres://postgres:postgres@localhost:5432/postgres" })
   await hub.connect()
   await hub.close()
-  t.pass()
 })
 
 it("can listen and notify", async t => {
@@ -33,15 +32,15 @@ it("can listen and notify", async t => {
     await hub.notify("test2", "should not be received, since not subscribed to channel test2")
     await delay(200)
 
-    t.deepEqual(hub.getSubscribedChannels(), ["test"])
-    t.deepEqual(notifications, [
+    expect(hub.getSubscribedChannels()).to.be.eql(["test"])
+    expect(notifications).to.be.eql([
       {
         channel: "test",
         payload: { hello: "world" },
         processId: notifications[0].processId
       }
     ])
-    t.deepEqual(receivedPayloads, [
+    expect(receivedPayloads).to.be.eql([
       { hello: "world" }
     ])
     t.is(connectedEvents, 1)

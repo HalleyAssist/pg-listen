@@ -142,7 +142,7 @@ function createPostgresSubscriber(connectionConfig, options = {}) {
             dbClient = await reconnect(attempt => emitter.emit("reconnect", attempt));
             initialize(dbClient);
             subscriptionLogger(`Re-subscribing to channels: ${subscribedChannels.join(", ")}`);
-            await Promise.all(subscribedChannels.map(channelName => dbClient.query(`LISTEN ${pg_format.default.ident(channelName)}`)));
+            await Promise.all(subscribedChannels.map(channelName => dbClient.query(`LISTEN ${pg_format.ident(channelName)}`)));
             emitter.emit("connected");
         }
         catch (error) {
@@ -181,16 +181,16 @@ function createPostgresSubscriber(connectionConfig, options = {}) {
             }
             subscriptionLogger(`Subscribing to PostgreSQL notification "${channelName}"`);
             subscribedChannels = [...subscribedChannels, channelName];
-            return dbClient.query(`LISTEN ${pg_format.default.ident(channelName)}`);
+            return dbClient.query(`LISTEN ${pg_format.ident(channelName)}`);
         },
         notify(channelName, payload) {
             notificationLogger(`Sending PostgreSQL notification to "${channelName}":`, payload);
             if (payload !== undefined) {
                 const serialized = serialize(payload);
-                return dbClient.query(`NOTIFY ${pg_format.default.ident(channelName)}, ${pg_format.default.literal(serialized)}`);
+                return dbClient.query(`NOTIFY ${pg_format.ident(channelName)}, ${pg_format.literal(serialized)}`);
             }
             else {
-                return dbClient.query(`NOTIFY ${pg_format.default.ident(channelName)}`);
+                return dbClient.query(`NOTIFY ${pg_format.ident(channelName)}`);
             }
         },
         unlisten(channelName) {
@@ -199,7 +199,7 @@ function createPostgresSubscriber(connectionConfig, options = {}) {
             }
             subscriptionLogger(`Unsubscribing from PostgreSQL notification "${channelName}"`);
             subscribedChannels = subscribedChannels.filter(someChannel => someChannel !== channelName);
-            return dbClient.query(`UNLISTEN ${pg_format.default.ident(channelName)}`);
+            return dbClient.query(`UNLISTEN ${pg_format.ident(channelName)}`);
         },
         unlistenAll() {
             subscriptionLogger("Unsubscribing from all PostgreSQL notifications.");
