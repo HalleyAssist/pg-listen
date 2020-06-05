@@ -1,6 +1,16 @@
-# pg-listen - Postgres LISTEN & NOTIFY that works
+<h1 align="center">pg-listen</h1>
+<h3 align="center">Postgres LISTEN & NOTIFY that works</h3>
 
-[![Build Status](https://travis-ci.org/andywer/pg-listen.svg?branch=master)](https://travis-ci.org/andywer/pg-listen) [![NPM Version](https://img.shields.io/npm/v/pg-listen.svg)](https://www.npmjs.com/package/pg-listen)
+<p align="center">
+  <a href="https://travis-ci.org/andywer/pg-listen">
+    <img alt="Build Status" src="https://travis-ci.org/andywer/pg-listen.svg?branch=master" />
+  </a>
+  <a href="https://www.npmjs.com/package/pg-listen">
+    <img alt="NPM Version" src="https://img.shields.io/npm/v/pg-listen.svg" />
+  </a>
+</p>
+
+<br />
 
 PostgreSQL can act as a message broker: Send notifications with arbitrary payloads from one database client to others.
 
@@ -61,7 +71,7 @@ export async function connect () {
 }
 
 export async function sendSampleMessage () {
-  await subscriber.notify({
+  await subscriber.notify("my-channel", {
     greeting: "Hey, buddy.",
     timestamp: Date.now()
   })
@@ -75,6 +85,10 @@ For details see [dist/index.d.ts](./dist/index.d.ts).
 
 
 ## Error & event handling
+
+#### `instance.events.on("connected", listener: () => void)`
+
+The `connected` event is emitted once after initially establishing the connection and later once after every successful reconnect. Reconnects happen automatically when `pg-listen` detects that the connection closed or became unresponsive.
 
 #### `instance.events.on("error", listener: (error: Error) => void)`
 
@@ -101,7 +115,7 @@ The convenient way of subscribing to notifications. Don't forget to call `.liste
 
 In one sentence: Because none of the existing packages was working reliably in production.
 
-Using the `NOTIFY` and `LISTEN` features is not trivial using [`node-postgres` (`pg`)](https://www.npmjs.com/package/pg), since you cannot use connection pools and even distinct client connections also tend to time out.
+Using the `NOTIFY` and `LISTEN` features is not trivial using [`node-postgres` (`pg`)](https://www.npmjs.com/package/pg) directly, since you cannot use connection pools and even distinct client connections also tend to time out.
 
 There are already a few packages out there, like `pg-pubsub`, but neither of them seems to work reliably. Errors are being swallowed, the code is hard to reason about, there is no type-safety, ...
 

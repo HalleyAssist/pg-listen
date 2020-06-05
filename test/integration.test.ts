@@ -16,16 +16,27 @@ test("can connect", async t => {
 })
 
 test("can listen and notify", async t => {
+  type ChannelEvents = {
+    test: {
+      hello: string
+    },
+    test2: string
+  }
+
+  let connectedEvents = 0
   const notifications: PgParsedNotification[] = []
   const receivedPayloads: any[] = []
 
-  const hub = createPostgresSubscriber({ connectionString: "postgres://postgres:postgres@localhost:5432/postgres" })
+  const hub = createPostgresSubscriber<ChannelEvents>({ connectionString: "postgres://postgres:postgres@localhost:5432/postgres" })
+
+  hub.events.on("connected", () => connectedEvents++)
+  hub.events.on("notification", (notification: PgParsedNotification) => notifications.push(notification))
+  hub.notifications.on("test", (payload: any) => receivedPayloads.push(payload))
+
   await hub.connect()
 
   try {
     await hub.listenTo("test")
-    await hub.events.on("notification", (notification: PgParsedNotification) => notifications.push(notification))
-    await hub.notifications.on("test", (payload: any) => receivedPayloads.push(payload))
 
     await hub.notify("test", { hello: "world" })
     await hub.notify("test2", "should not be received, since not subscribed to channel test2")
@@ -42,6 +53,37 @@ test("can listen and notify", async t => {
     t.deepEqual(receivedPayloads, [
       { hello: "world" }
     ])
+    t.is(connectedEvents, 1)
+  } finally {
+    await hub.close()
+  }
+})
+
+test("can handle notification without payload", async t => {
+  const notifications: PgParsedNotification[] = []
+  const receivedPayloads: any[] = []
+
+  const hub = createPostgresSubscriber({ connectionString: "postgres://postgres:postgres@localhost:5432/postgres" })
+  await hub.connect()
+
+  try {
+    await hub.listenTo("test")
+
+    hub.events.on("notification", (notification: PgParsedNotification) => notifications.push(notification))
+    hub.notifications.on("test", (payload: any) => receivedPayloads.push(payload))
+
+    await hub.notify("test")
+    await delay(200)
+
+    t.deepEqual(hub.getSubscribedChannels(), ["test"])
+    t.deepEqual(notifications, [
+      {
+        channel: "test",
+        payload: undefined,
+        processId: notifications[0].processId
+      }
+    ])
+    t.deepEqual(receivedPayloads, [undefined])
   } finally {
     await hub.close()
   }
@@ -49,7 +91,6 @@ test("can listen and notify", async t => {
 
 test("can use custom `parse` function", async t => {
   const notifications: PgParsedNotification[] = []
-  const receivedPayloads: any[] = []
 
   const connectionString = "postgres://postgres:postgres@localhost:5432/postgres"
 
@@ -82,9 +123,11 @@ test("can use custom `parse` function", async t => {
 })
 
 test.serial("getting notified after connection is terminated", async t => {
+  let connectedEvents = 0
+  let reconnects = 0
+
   const notifications: PgParsedNotification[] = []
   const receivedPayloads: any[] = []
-  let reconnects = 0
 
   const connectionString = "postgres://postgres:postgres@localhost:5432/postgres"
   let client = new pg.Client({ connectionString })
@@ -94,13 +137,16 @@ test.serial("getting notified after connection is terminated", async t => {
     { connectionString: connectionString + "?ApplicationName=pg-listen-termination-test" },
     { paranoidChecking: 1000 }
   )
+
+  hub.events.on("connected", () => connectedEvents++)
+  hub.events.on("notification", (notification: PgParsedNotification) => notifications.push(notification))
+  hub.events.on("reconnect", () => reconnects++)
+  hub.notifications.on("test", (payload: any) => receivedPayloads.push(payload))
+
   await hub.connect()
 
   try {
     await hub.listenTo("test")
-    hub.events.on("notification", (notification: PgParsedNotification) => notifications.push(notification))
-    hub.events.on("reconnect", () => reconnects++)
-    hub.notifications.on("test", (payload: any) => receivedPayloads.push(payload))
 
     await delay(1000)
     debug("Terminating database backend")
@@ -128,6 +174,7 @@ test.serial("getting notified after connection is terminated", async t => {
       { hello: "world" }
     ])
     t.is(reconnects, 1)
+    t.is(connectedEvents, 2)
   } finally {
     debug("Closing the subscriber")
     await hub.close()
