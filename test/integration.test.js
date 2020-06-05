@@ -109,10 +109,11 @@ it("can use custom `parse` function", async () => {
     ])
   } finally {
     await hub.close()
+    await client.end()
   }
 })
 
-it("getting notified after connection is terminated", async () => {
+it("getting notified after connection is terminated", async function () {
   this.timeout(4000)
   let connectedEvents = 0
   let reconnects = 0
@@ -123,7 +124,7 @@ it("getting notified after connection is terminated", async () => {
   const connectionString = "postgres://postgres:postgres@localhost:5432/postgres"
   let client = new pg.Client({ connectionString })
   await client.connect()
-  client.on('error',()=>{})
+  client.on('error', ()=>{})
 
   const hub = createPostgresSubscriber(
     { connectionString: connectionString + "?ApplicationName=pg-listen-termination-test" },
@@ -145,6 +146,7 @@ it("getting notified after connection is terminated", async () => {
 
     // Don't await as we kill some other connection, so the promise won't resolve (I think)
     client.query("SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE pid <> pg_backend_pid() AND usename = current_user").catch(()=>{})
+    await client.end()
     await delay(2000)
 
     client = new pg.Client({ connectionString })
@@ -170,5 +172,7 @@ it("getting notified after connection is terminated", async () => {
   } finally {
     debug("Closing the subscriber")
     await hub.close()
+    debug("Closing the con")
+    await client.end()
   }
 })
