@@ -13,12 +13,12 @@ const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
 
 function DefaultRetry(attempt){
-    return Math.max(attempt * 500, 300000)
+    return Math.min((attempt + 1) * 500, 30000)
 }
 
 function connect(connectionConfig, emitter, options) {
     connectionLogger("Creating PostgreSQL client for notification streaming");
-    const { retryInterval = DefaultRetry, retryLimit = Infinity, retryTimeout = Infinity } = options;
+    const { retryInterval = DefaultRetry, retryLimit = Infinity, retryTimeout = false } = options;
     const effectiveConnectionConfig = { ...connectionConfig, keepAlive: true };
     const Client = options.native && pg.native ? pg.native.Client : pg.Client;
     const dbClient = new Client(effectiveConnectionConfig);
