@@ -12,12 +12,17 @@ const subscriptionLogger = debug("pg-listen:subscription");
 const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
 
+function DefaultRetry(attempt){
+    return Math.max(attempt * 500, 300000)
+}
+
 function connect(connectionConfig, emitter, options) {
     connectionLogger("Creating PostgreSQL client for notification streaming");
-    const { retryInterval = 500, retryLimit = Infinity, retryTimeout = 3000 } = options;
+    const { retryInterval = DefaultRetry, retryLimit = Infinity, retryTimeout = Infinity } = options;
     const effectiveConnectionConfig = { ...connectionConfig, keepAlive: true };
     const Client = options.native && pg.native ? pg.native.Client : pg.Client;
     const dbClient = new Client(effectiveConnectionConfig);
+    const getRetryInterval = typeof retryInterval === "function" ? retryInterval : () => retryInterval
     const reconnect = async (onAttempt) => {
         connectionLogger("Reconnecting to PostgreSQL for notification streaming");
         const startTime = Date.now();
@@ -40,7 +45,7 @@ function connect(connectionConfig, emitter, options) {
             }
             catch (error) {
                 connectionLogger("PostgreSQL reconnection attempt failed:", error);
-                await delay(retryInterval);
+                await delay(getRetryInterval(attempt - 1))
                 if (retryTimeout && (Date.now() - startTime) > retryTimeout) {
                     throw new Error(`Stopping PostgreSQL reconnection attempts after ${retryTimeout}ms timeout has been reached.`);
                 }
