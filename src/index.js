@@ -147,7 +147,9 @@ function createPostgresSubscriber(connectionConfig, options = {}) {
             dbClient = await reconnect(attempt => emitter.emit("reconnect", attempt));
             initialize(dbClient);
             const subscribedChannelsArray = Array.from(subscribedChannels)
-            subscriptionLogger(`Re-subscribing to channels: ${subscribedChannelsArray.join(", ")}`);
+            if (subscriptionLogger.enabled) {
+                subscriptionLogger(`Re-subscribing to channels: ${subscribedChannelsArray.join(", ")}`);
+            }
             await Promise.all(subscribedChannelsArray.map(channelName => dbClient.query(`LISTEN ${pg_format.ident(channelName)}`)));
             emitter.emit("connected");
         }
