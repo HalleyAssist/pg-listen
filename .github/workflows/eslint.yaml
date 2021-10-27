@@ -1,0 +1,14 @@
+name: eslint
+on:
+  push:
+    branches:
+      - master # Change this to your default branch
+jobs:
+  check_eslint:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Install modules
+      run: |
+        sudo npm install -g eslint
+    - run: eslint index.js src  --ext .js,.jsx,.ts,.tsx

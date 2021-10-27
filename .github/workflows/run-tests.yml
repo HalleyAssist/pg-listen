@@ -1,0 +1,33 @@
+name: Test
+on:
+  push:
+
+jobs:
+  check_eslint:
+    runs-on: ubuntu-latest
+
+    container: node:14-buster
+
+    # Service containers to run with `container-job`
+    services:
+      # Label used to access the service container
+      postgres:
+        # Docker Hub image
+        image: postgres
+        # Provide the password for postgres
+        env:
+          POSTGRES_PASSWORD: postgres
+        # Set health checks to wait until postgres has started
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10
+          --health-timeout 5
+          --health-retries 5
+    steps:
+    - uses: actions/checkout@v2
+    - name: Install modules
+      run: |
+        npm install
+    - name: Install modules
+      run: |
+        npm run test

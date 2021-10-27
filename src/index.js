@@ -16,7 +16,7 @@ function DefaultRetry(attempt){
     return Math.min((attempt + 1) * 500, 30000)
 }
 
-function connect(connectionConfig, emitter, options) {
+function connect(connectionConfig, _emitter, options) {
     connectionLogger("Creating PostgreSQL client for notification streaming");
     const { retryInterval = DefaultRetry, retryLimit = Infinity, retryTimeout = false } = options;
     const effectiveConnectionConfig = { ...connectionConfig, keepAlive: true };
