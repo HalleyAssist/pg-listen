@@ -7,7 +7,7 @@ const debug = require('debug')("pg-listen:test")
 const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms))
 
 it("can connect", async () => {
-  const hub = createPostgresSubscriber({ connectionString: "postgres://postgres:postgres@localhost:5432/postgres" })
+  const hub = createPostgresSubscriber({ connectionString: "postgres://postgres:postgres@postgres:5432/postgres" })
   await hub.connect()
   await hub.close()
 })
@@ -17,7 +17,7 @@ it("can listen and notify", async () => {
   const notifications = []
   const receivedPayloads = []
 
-  const hub = createPostgresSubscriber({ connectionString: "postgres://postgres:postgres@localhost:5432/postgres" })
+  const hub = createPostgresSubscriber({ connectionString: "postgres://postgres:postgres@postgres:5432/postgres" })
 
   hub.events.on("connected", () => connectedEvents++)
   hub.events.on("notification", (notification) => notifications.push(notification))
@@ -53,7 +53,7 @@ it("can handle notification without payload", async () => {
   const notifications = []
   const receivedPayloads = []
 
-  const hub = createPostgresSubscriber({ connectionString: "postgres://postgres:postgres@localhost:5432/postgres" })
+  const hub = createPostgresSubscriber({ connectionString: "postgres://postgres:postgres@postgres:5432/postgres" })
   await hub.connect()
 
   try {
@@ -82,7 +82,7 @@ it("can handle notification without payload", async () => {
 it("can use custom `parse` function", async () => {
   const notifications = []
 
-  const connectionString = "postgres://postgres:postgres@localhost:5432/postgres"
+  const connectionString = "postgres://postgres:postgres@postgres:5432/postgres"
 
   const hub = createPostgresSubscriber(
     { connectionString },
@@ -121,7 +121,7 @@ it("getting notified after connection is terminated", async function () {
   const notifications = []
   const receivedPayloads = []
 
-  const connectionString = "postgres://postgres:postgres@localhost:5432/postgres"
+  const connectionString = "postgres://postgres:postgres@postgres:5432/postgres"
   let client = new pg.Client({ connectionString })
   await client.connect()
   client.on('error', ()=>{})
